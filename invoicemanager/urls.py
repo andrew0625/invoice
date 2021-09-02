@@ -1,5 +1,6 @@
 from django.urls import path
-
+from django.contrib import admin
+from django.conf.urls import include
 from . import views
 
 app_name = "invoicemanager"
@@ -8,6 +9,10 @@ urlpatterns = [
 	# # # DEFAULT
 
 	path('', views.invoices.index, name='index'),
+	
+	path('admin/', admin.site.urls),
+	
+  path('accounts/', include('django.contrib.auth.urls')),
 
     # # # INVOICES
 
@@ -42,6 +47,16 @@ urlpatterns = [
 
     path('accounting/', views.reports.accounting, name='accounting'),
 
+    # # # new user registration
+    
+    path("register", views.register_request, name="register"),
+    
+     # payments 
+   
+   # path('payments/', include('payments.urls')),
+
+   # path('settings/', admin.site.urls),
+    
     # # # ATTACHMENTS
 
     path('invoice/<int:invoice_id>/attachments/add/', views.invoices.upload_invoice_attachment, name='upload_invoice_attachment'),
@@ -52,7 +67,7 @@ urlpatterns = [
 
     path('customers/', views.customers.customer_list, name='customer_list'),
     path('customer/<int:customer_id>/', views.customers.customer, name='customer'),
-	path('customer/<int:customer_id>/update/', views.customers.update_customer, name='update_customer'),
+	  path('customer/<int:customer_id>/update/', views.customers.update_customer, name='update_customer'),
     path('customer/<int:customer_id>/delete/', views.customers.delete_customer, name='delete_customer'),
     path('customer/new/', views.customers.new_customer, name='new_customer'),
 
@@ -63,6 +78,6 @@ urlpatterns = [
 
     # # # ADMIN
 
-    path('users/', views.admin.users, name='users'),
+    path('admin/users/', views.admin.users, name='users'),
     path('settings/', views.admin.settings, name='settings'),
 ]

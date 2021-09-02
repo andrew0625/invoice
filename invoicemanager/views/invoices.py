@@ -12,7 +12,7 @@ from invoicemanager.models import Customer, Invoice, InvoiceItem, Expense, Invoi
 # Default invoice list, show 25 recent invoices
 @login_required(login_url='login/')
 def index(request):
-    invoices = Invoice.objects.order_by('-date')[:25]
+    invoices = Invoice.objects.filter(userid=request.user.id).order_by('-date')[:25] #invoices = Invoice.objects.order_by('-date')[:25]
     context = {
 		'title' : 'Recent Invoices',
         'invoice_list' : invoices,
@@ -21,11 +21,10 @@ def index(request):
 
 
 
-
 # Show big list of all invoices
 @login_required(login_url='login/')
 def all_invoices(request):
-    invoices = Invoice.objects.order_by('-date')
+    invoices = Invoice.objects.filter(userid=request.user.id).order_by('-date')
     context = {
 		'title' : 'All Invoices',
         'invoice_list' : invoices,
@@ -37,7 +36,7 @@ def all_invoices(request):
 # Show draft invoices
 @login_required(login_url='login/')
 def draft_invoices(request):
-    invoices = Invoice.objects.filter(status='Draft').order_by('-date')
+    invoices = Invoice.objects.filter(userid=request.user.id, status='Draft').order_by('-date')#invoices = Invoice.objects.filter(status='Draft').order_by('-date')
     context = {
 		'title' : 'Draft Invoices',
         'invoice_list' : invoices,
@@ -49,7 +48,7 @@ def draft_invoices(request):
 # Show paid invoices
 @login_required(login_url='login/')
 def paid_invoices(request):
-    invoices = Invoice.objects.filter(status='Paid').order_by('-date')
+    invoices = Invoice.objects.filter(userid=request.user.id, status='Paid').order_by('-date')#invoices = Invoice.objects.filter(status='Paid').order_by('-date')
     context = {
 		'title' : 'Paid Invoices',
         'invoice_list' : invoices,
@@ -61,7 +60,7 @@ def paid_invoices(request):
 # Show unpaid invoices
 @login_required(login_url='login/')
 def unpaid_invoices(request):
-    invoices = Invoice.objects.filter(status='Unpaid').order_by('-date')
+    invoices = Invoice.objects.filter(userid=request.user.id, status='Unpaid').order_by('-date')#invoices = Invoice.objects.filter(status='Unpaid').order_by('-date')
     context = {
 		'title' : 'Unpaid Invoices',
         'invoice_list' : invoices,
@@ -73,7 +72,7 @@ def unpaid_invoices(request):
 # Display a specific invoice
 @login_required(login_url='login/')
 def invoice(request, invoice_id):
-    invoice = get_object_or_404(Invoice, pk=invoice_id)
+    invoice = get_object_or_404(Invoice, pk=invoice_id, userid=request.user.id)
     context = {
 		'title' : 'Invoice ' + str(invoice_id),
 	    'invoice' : invoice,
@@ -98,7 +97,7 @@ def new_invoice(request):
 		customer_id = request.POST['customer_id']
 
 		if customer_id=='None':
-			customers = Customer.objects.order_by('name')
+			customers = Customer.objects.filter(userid=request.user.id).order_by('name')#customers = Customer.objects.order_by('name')
 			context = {
 				'title' : 'New Invoice',
 				'customer_list' : customers,
@@ -107,13 +106,14 @@ def new_invoice(request):
 			return render(request, 'new_invoice.html', context)
 		else:
 			customer = get_object_or_404(Customer, pk=customer_id)
-			i = Invoice(customer=customer, date=datetime.date.today(), status='Unpaid')
+			i = Invoice(customer=customer, date=datetime.date.today(), status='Draft', userid=request.user.id)
 			i.save()
+			
 			return HttpResponseRedirect(reverse('invoice', args=(i.id,)))
 
 	else:
 		# Customer list needed to populate select field
-		customers = Customer.objects.order_by('name')
+		customers = Customer.objects.filter(userid=request.user.id).order_by('name')#customers = Customer.objects.order_by('name')
 		context = {
 			'title' : 'New Invoice',
 			'customer_list' : customers,
@@ -125,7 +125,7 @@ def new_invoice(request):
 # Print invoice
 @login_required(login_url='login/')
 def print_invoice(request, invoice_id):
-    invoice = get_object_or_404(Invoice, pk=invoice_id)
+    invoice = get_object_or_404(Invoice, pk=invoice_id, userid=request.user.id)
     context = {
 		'title' : "Invoice " + str(invoice_id),
 	    'invoice' : invoice,
@@ -137,7 +137,7 @@ def print_invoice(request, invoice_id):
 # Delete an invoice
 @login_required(login_url='login/')
 def delete_invoice(request, invoice_id):
-    invoice = get_object_or_404(Invoice, pk=invoice_id)
+    invoice = get_object_or_404(Invoice, pk=invoice_id, userid=request.user.id)
     invoice.delete()
     return HttpResponseRedirect(reverse('index'))
 
@@ -146,10 +146,15 @@ def delete_invoice(request, invoice_id):
 # Update invoice
 @login_required(login_url='login/')
 def update_invoice(request, invoice_id):
-	invoice = get_object_or_404(Invoice, pk=invoice_id)
+	invoice = get_object_or_404(Invoice, pk=invoice_id, userid=request.user.id)
 	try:
 		invoice.date = datetime.datetime.strptime(request.POST['date'], "%m/%d/%Y")
 		invoice.status = request.POST['status']
+		invoice.invoice_name = request.POST['invoice_name']
+		invoice.purchase_number = request.POST['purchase_number']
+		invoice.due_date = datetime.datetime.strptime(request.POST['due_date'], "%m/%d/%Y")
+		invoice.invoice_description = request.POST['invoice_description']
+	#	invoice.notes = 'hello'
 		invoice.save()
 	except (KeyError, Invoice.DoesNotExist):
 		return render(request, 'invoice.html', {
@@ -170,7 +175,7 @@ def update_invoice(request, invoice_id):
 @login_required(login_url='login/')
 def upload_invoice_attachment(request, invoice_id):
     myfile = request.FILES['file']
-    invoice = get_object_or_404(Invoice, pk=invoice_id)
+    invoice = get_object_or_404(Invoice, pk=invoice_id, userid=request.user.id)
 
     fs = FileSystemStorage()
     fs.save(myfile.name, myfile)
@@ -185,7 +190,7 @@ def upload_invoice_attachment(request, invoice_id):
 # Delete attachment from invoice
 @login_required(login_url='login/')
 def delete_invoice_attachment(request, invoice_id, invoiceattachment_id):
-	invoice = get_object_or_404(Invoice, pk=invoice_id)
+	invoice = get_object_or_404(Invoice, pk=invoice_id, userid=request.user.id)
 	invoiceattachment = get_object_or_404(InvoiceAttachment, pk=invoiceattachment_id)
 	try:
 		invoiceattachment.delete()

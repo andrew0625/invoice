@@ -5,3 +5,4 @@ from invoicemanager.views.expenses import *
 from invoicemanager.views.reports import *
 from invoicemanager.views.userauth import *
 from invoicemanager.views.admin import *
+from invoicemanager.views.reg import *

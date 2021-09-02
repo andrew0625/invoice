@@ -36,7 +36,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    'accounts',
+    'crispy_forms',
 ]
+
+AUTH_USER_MODEL = 'accounts.CustomUser' # new
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -68,6 +73,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'invoicemanager.wsgi.application'
 
+DFS_BASE_TEMPLATE = 'base.html'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
@@ -76,12 +84,12 @@ WSGI_APPLICATION = 'invoicemanager.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-		'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'invoiceman' ,
+        'USER': 'pks',
+        'PASSWORD': 'abc123!',
+        'HOST':'localhost',
+        
     }
 }
 

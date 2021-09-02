@@ -11,7 +11,7 @@ from invoicemanager.models import Customer, Invoice, InvoiceItem, Expense, Invoi
 # List all customers
 @login_required(login_url='login/')
 def customer_list(request):
-	customers = Customer.objects.all()
+	customers = Customer.objects.filter(userid=request.user.id)#customers = Customer.objects.all()
 	context = {
 		'title' : 'Customer List',
 		'customers' : customers,
@@ -23,10 +23,10 @@ def customer_list(request):
 # Show specific customer details
 @login_required(login_url='login/')
 def customer(request, customer_id):
-	customer = get_object_or_404(Customer, pk=customer_id)
+	customer = get_object_or_404(Customer, pk=customer_id, userid=request.user.id)
 	invoices = Invoice.objects.filter(customer = customer)
 	context = {
-		'title' : "Customer info - %s" % customer.name,
+		'title' : "Customer info - %s" % customer.fname,
 		'customer' : customer,
 		'invoices' : invoices,
 	}
@@ -39,11 +39,11 @@ def customer(request, customer_id):
 def new_customer(request):
 	if request.method == 'POST':
 		# Stuff from form
-		c = Customer(name=request.POST['name'], address1=request.POST['address1'], address2=request.POST['address2'], city=request.POST['city'], state=request.POST['state'], zip=request.POST['zip'], email=request.POST['email'])
+		c = Customer(fname=request.POST['fname'], lname=request.POST['lname'], userid=request.user.id, organization=request.POST['company'], address1=request.POST['address1'], address2=request.POST['address2'], city=request.POST['city'], state=request.POST['state'], zip=request.POST['zip'], email=request.POST['email'], phone=request.POST['phone'], website=request.POST['website'])
 		c.save()
 
 		if 'savecreate' in request.POST:
-			i = Invoice(customer=c, date=datetime.date.today(), status='Unpaid')
+			i = Invoice(customer=c, date=datetime.date.today(), company=request.POST['company'], status='Unpaid')
 			i.save()
 			return HttpResponseRedirect(reverse('invoice', args=(i.id,)))
 		else:
@@ -57,15 +57,19 @@ def new_customer(request):
 @login_required(login_url='login/')
 def update_customer(request, customer_id):
 	# Stuff from form
-	c = get_object_or_404(Customer, pk=customer_id)
+	c = get_object_or_404(Customer, pk=customer_id, userid=request.user.id)
 
-	c.name = request.POST['name']
+	c.fname = request.POST['fname']
+	c.lname = request.POST['lname']
+	c.company = request.POST['company']
 	c.address1 = request.POST['address1']
 	c.address2 = request.POST['address2']
 	c.city = request.POST['city']
 	c.state = request.POST['state']
 	c.zip = request.POST['zip']
 	c.email = request.POST['email']
+	c.phone = request.POST['phone']
+	c.website = request.POST['website']
 
 	c.save()
 
@@ -75,6 +79,6 @@ def update_customer(request, customer_id):
 # Delete customer
 @login_required(login_url='login/')
 def delete_customer(request, customer_id):
-	customer = get_object_or_404(Customer, pk=customer_id)
+	customer = get_object_or_404(Customer, pk=customer_id, userid=request.user.id)
 	customer.delete()
 	return HttpResponseRedirect(reverse('customer_list'))

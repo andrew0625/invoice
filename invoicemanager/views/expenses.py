@@ -12,7 +12,7 @@ from invoicemanager.models import Customer, Invoice, InvoiceItem, Expense, Invoi
 # Add expense to invoice
 @login_required(login_url='login/')
 def add_invoice_expense(request, invoice_id):
-	invoice = get_object_or_404(Invoice, pk=invoice_id)
+	invoice = get_object_or_404(Invoice, pk=invoice_id, userid=request.user.id)
 	try:
 		e = invoice.expense_set.create(description=request.POST['description'], cost=request.POST['cost'], qty=request.POST['qty'])
 		e.save()
@@ -29,8 +29,8 @@ def add_invoice_expense(request, invoice_id):
 # Delete expense from invoice
 @login_required(login_url='login/')
 def delete_invoice_expense(request, expense_id, invoice_id):
-	expense = get_object_or_404(Expense, pk=expense_id)
-	invoice = get_object_or_404(Invoice, pk=invoice_id)
+	expense = get_object_or_404(Expense, pk=expense_id, userid=request.user.id)
+	invoice = get_object_or_404(Invoice, pk=invoice_id, userid=request.user.id)
 	try:
 		expense.delete()
 	except (KeyError, Expense.DoesNotExist):
@@ -46,7 +46,7 @@ def delete_invoice_expense(request, expense_id, invoice_id):
 # List all business expenses (expense item with no invoice_id)
 @login_required(login_url='login/')
 def expense_list(request):
-	expenses = Expense.objects.filter(invoice_id=None)
+	expenses = Expense.objects.filter(invoice_id=None, userid=request.user.id)
 	context = {
 		'expenses' : expenses,
 	}
@@ -60,7 +60,7 @@ def new_business_expense(request):
 	if request.method == 'POST':
 		# Stuff from form
 		date = datetime.datetime.strptime(request.POST['date'], "%m/%d/%Y")
-		e = Expense(description=request.POST['description'], date=date, cost=request.POST['cost'], qty=request.POST['qty'])
+		e = Expense(description=request.POST['description'], date=date, cost=request.POST['cost'], qty=request.POST['qty'], userid=request.user.id)
 		e.save()
 		return HttpResponseRedirect(reverse('expense_list'))
 	else:
@@ -72,7 +72,7 @@ def new_business_expense(request):
 @login_required(login_url='login/')
 def upload_business_expense_attachment(request, expense_id):
     # Get expense
-    expense = get_object_or_404(Expense, pk=expense_id)
+    expense = get_object_or_404(Expense, pk=expense_id, userid=request.user.id)
 
     if request.method == 'POST':
         # Get file from POST data
@@ -99,8 +99,8 @@ def upload_business_expense_attachment(request, expense_id):
 # Delete attachment from business expense
 @login_required(login_url='login/')
 def delete_business_expense_attachment(request, expense_id, expenseattachment_id):
-	expense = get_object_or_404(Expense, pk=expense_id)
-	expenseattachment = get_object_or_404(ExpenseAttachment, pk=expenseattachment_id)
+	expense = get_object_or_404(Expense, pk=expense_id, userid=request.user.id)
+	expenseattachment = get_object_or_404(ExpenseAttachment, pk=expenseattachment_id, userid=request.user.id)
 	try:
 		expenseattachment.delete()
 		fs = FileSystemStorage()
@@ -118,7 +118,7 @@ def delete_business_expense_attachment(request, expense_id, expenseattachment_id
 # Delete business expense
 @login_required(login_url='login/')
 def delete_business_expense(request, expense_id):
-	expense = get_object_or_404(Expense, pk=expense_id)
+	expense = get_object_or_404(Expense, pk=expense_id, userid=request.user.id)
 	try:
 		expense.delete()
 	except (KeyError, Expense.DoesNotExist):

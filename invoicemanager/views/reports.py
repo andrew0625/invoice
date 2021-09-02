@@ -23,9 +23,9 @@ def accounting(request):
 			}
 			return render(request, 'accounting.html', context)
 		else:
-			paidinvoices = Invoice.objects.filter(date__gt=start).filter(date__lt=end).filter(status = 'Paid')
-			allinvoices = Invoice.objects.filter(date__gt=start).filter(date__lt=end)
-			expenses = Expense.objects.filter(date__gt=start).filter(date__lt=end)
+			paidinvoices = Invoice.objects.filter(date__gt=start).filter(date__lt=end).filter(userid=request.user.id).filter(status = 'Paid')
+			allinvoices = Invoice.objects.filter(date__gt=start).filter(date__lt=end).filter(userid=request.user.id)
+			expenses = Expense.objects.filter(date__gt=start).filter(date__lt=end).filter(userid=request.user.id)
 			
 			# Sum of all paid invoices
 			invoicetotal = 0
